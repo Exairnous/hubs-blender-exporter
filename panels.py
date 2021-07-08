@@ -153,8 +153,17 @@ def draw_component(panel, context, obj, row, component_item):
         draw_type(context, content_col, obj, component, path, component_definition)
 
 def draw_type(context, col, obj, target, path, type_definition):
+    if type_definition.get('operators'):
+        for operator_name, operator_definition in type_definition['operators'].items():
+            draw_operator(context, col, obj, target, path, operator_name, operator_definition)
     for property_name, property_definition in type_definition['properties'].items():
         draw_property(context, col, obj, target, path, property_name, property_definition)
+
+def draw_operator(context, col, obj, target, path, operator_name, operator_definition):
+    if operator_definition.get("toggle") and getattr(target, operator_definition["condition"]):
+        col.operator(operator_definition["idname"], text=operator_definition["text_2"], icon=operator_definition["icon_2"])
+    else:
+        col.operator(operator_definition["idname"], text=operator_definition["text"], icon=operator_definition["icon"])
 
 def draw_property(context, col, obj, target, path, property_name, property_definition):
     property_type = property_definition['type']
@@ -172,7 +181,8 @@ def draw_property(context, col, obj, target, path, property_name, property_defin
         type_row.label(text=display_name)
         draw_type(context, type_row.column(), obj, getattr(target, property_name), path + "." + property_name, registered_types[property_type])
     else:
-        col.prop(data=target, property=property_name)
+        if not property_definition.get("internal"):
+            col.prop(data=target, property=property_name)
 
 def draw_collections_property(_context, col, obj, _target, _path, property_name, property_definition):
     collections_row = col.row()

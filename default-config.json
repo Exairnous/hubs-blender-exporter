@@ -229,7 +229,11 @@
     "uv-scroll": {
       "category": "Animation",
       "node": true,
+      "operators": {
+        "preview": {"type": "operator", "idname": "object.preview_uv_scroll_exec", "text": "Preview UV Scroll", "icon" :"HIDE_OFF", "toggle": true, "condition": "preview", "text_2": "Cancel Preview", "icon_2": "CANCEL"}
+      },
       "properties": {
+        "preview": {"type": "bool", "default": false, "internal": true},
         "speed": {"type": "vec2", "default": {"x": 0, "y": 0}},
         "increment": {"type": "vec2", "default": {"x": 0, "y": 0}}
       }

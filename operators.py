@@ -224,6 +224,130 @@ class ResetHubsComponentNames(Operator):
 
         return {'FINISHED'}
 
+class UVScrollPreviewOperator(Operator):
+    """Preview UV Scrolling"""
+    bl_idname = "object.preview_uv_scroll"
+    bl_label = "Preview UV Scroll"
+
+    _timer = None
+    reset = False
+    finished = False
+    orig_mode = None
+    speed_unit = 0.0125
+    step_x = 0
+    step_y = 0
+    reset_step_x = False
+    reset_step_y = False
+
+    def modal(self, context, event):
+        obj = context.active_object
+
+        if event.type == 'ESC' or not obj.hubs_component_uv_scroll.preview:
+            obj.hubs_component_uv_scroll.preview = False
+            self.finished = True
+
+        if event.type == 'TIMER':
+            idx = 0
+            resetting = False
+            new_uv_positions = []
+
+            self.step_x += self.speed_unit * obj.hubs_component_uv_scroll.speed[0]
+            self.step_y += self.speed_unit * obj.hubs_component_uv_scroll.speed[1]
+
+            for polygon in obj.data.polygons:
+                for vert, loop_idx in zip(polygon.vertices, polygon.loop_indices):
+                    uv_coords = obj.data.uv_layers.active.data[loop_idx].uv
+
+                    if self.reset:
+                        resetting = True
+                        uv_coords.x = self.orig_uv_position[idx][0]
+                        uv_coords.y = self.orig_uv_position[idx][1]
+
+                    else:
+                        if not obj.hubs_component_uv_scroll.increment[0]:
+                            uv_coords.x += self.speed_unit * obj.hubs_component_uv_scroll.speed[0]
+                        else:
+                            if self.step_x >= obj.hubs_component_uv_scroll.increment[0]:
+                                uv_coords.x += obj.hubs_component_uv_scroll.increment[0]
+                                self.reset_step_x = True
+
+                        if not obj.hubs_component_uv_scroll.increment[1]:
+                            uv_coords.y += self.speed_unit * obj.hubs_component_uv_scroll.speed[1]
+                        else:
+                            if self.step_y >= obj.hubs_component_uv_scroll.increment[1]:
+                                uv_coords.y += obj.hubs_component_uv_scroll.increment[1]
+                                self.reset_step_y = True
+
+                        new_uv_positions.append((uv_coords.x, uv_coords.y))
+
+                    idx += 1
+
+            if self.reset_step_x:
+                self.step_x = 0
+                self.reset_step_x = False
+
+            if self.reset_step_y:
+                self.step_y = 0
+                self.reset_step_y = False
+
+            if resetting:
+                self.reset = False
+
+            else:
+                if ((new_uv_positions[0][0] >= self.orig_uv_position[0][0] + 1) or (new_uv_positions[0][1] >= self.orig_uv_position[0][1] + 1)) \
+                or ((new_uv_positions[0][0] <= self.orig_uv_position[0][0] - 1) or (new_uv_positions[0][1] <= self.orig_uv_position[0][1] - 1)):
+                    self.reset = True
+
+            if self.finished:
+                idx = 0
+                for polygon in obj.data.polygons:
+                    for vert, loop_idx in zip(polygon.vertices, polygon.loop_indices):
+                        uv_coords = obj.data.uv_layers.active.data[loop_idx].uv
+                        uv_coords.x = self.orig_uv_position[idx][0]
+                        uv_coords.y = self.orig_uv_position[idx][1]
+                        idx += 1
+
+                context.window_manager.event_timer_remove(self._timer)
+                bpy.ops.object.mode_set(mode=self.orig_mode)
+                return {'FINISHED'}
+
+
+
+        return {'PASS_THROUGH'}
+
+    def invoke(self, context, event):
+        obj = context.active_object
+        self.orig_mode = obj.mode
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+        self.orig_uv_position = []
+
+        for polygon in obj.data.polygons:
+            for vert, loop_idx in zip(polygon.vertices, polygon.loop_indices):
+                uv_coords = obj.data.uv_layers.active.data[loop_idx].uv
+                self.orig_uv_position.append((uv_coords.x, uv_coords.y))
+
+        self._timer = context.window_manager.event_timer_add(0.01, window=context.window)
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+class UVScrollPreviewExecOperator(Operator):
+    """Preview UV Scrolling"""
+    bl_idname = "object.preview_uv_scroll_exec"
+    bl_label = "Preview UV Scroll Exec"
+
+    def execute(self, context):
+        obj = context.active_object
+
+        if not obj.hubs_component_uv_scroll.preview:
+            obj.hubs_component_uv_scroll.preview = True
+            bpy.ops.object.preview_uv_scroll('INVOKE_DEFAULT')
+
+        else:
+            obj.hubs_component_uv_scroll.preview = False
+
+        return {'FINISHED'}
+
 def register():
     bpy.utils.register_class(AddHubsComponent)
     bpy.utils.register_class(RemoveHubsComponent)
@@ -232,6 +356,8 @@ def register():
     bpy.utils.register_class(RemoveHubsComponentItem)
     bpy.utils.register_class(ReloadHubsConfig)
     bpy.utils.register_class(ResetHubsComponentNames)
+    bpy.utils.register_class(UVScrollPreviewOperator)
+    bpy.utils.register_class(UVScrollPreviewExecOperator)
 
 def unregister():
     bpy.utils.unregister_class(AddHubsComponent)
@@ -241,3 +367,5 @@ def unregister():
     bpy.utils.unregister_class(RemoveHubsComponentItem)
     bpy.utils.unregister_class(ReloadHubsConfig)
     bpy.utils.unregister_class(ResetHubsComponentNames)
+    bpy.utils.unregister_class(UVScrollPreviewOperator)
+    bpy.utils.unregister_class(UVScrollPreviewExecOperator)
