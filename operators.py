@@ -233,7 +233,7 @@ class UVScrollPreviewOperator(Operator):
     reset = False
     finished = False
     orig_mode = None
-    speed_unit = 0.0125
+    speed_unit = 0.01277
     step_x = 0
     step_y = 0
     reset_step_x = False
@@ -251,8 +251,15 @@ class UVScrollPreviewOperator(Operator):
             resetting = False
             new_uv_positions = []
 
-            self.step_x += self.speed_unit * obj.hubs_component_uv_scroll.speed[0]
-            self.step_y += self.speed_unit * obj.hubs_component_uv_scroll.speed[1]
+            speed_x = obj.hubs_component_uv_scroll.speed[0]
+            speed_y = obj.hubs_component_uv_scroll.speed[1] * -1
+            increment_x = abs(obj.hubs_component_uv_scroll.increment[0])
+            increment_y = abs(obj.hubs_component_uv_scroll.increment[1])
+            move_x = self.speed_unit * speed_x
+            move_y = self.speed_unit * speed_y
+
+            self.step_x += move_x
+            self.step_y += move_y
 
             for polygon in obj.data.polygons:
                 for vert, loop_idx in zip(polygon.vertices, polygon.loop_indices):
@@ -264,18 +271,18 @@ class UVScrollPreviewOperator(Operator):
                         uv_coords.y = self.orig_uv_position[idx][1]
 
                     else:
-                        if not obj.hubs_component_uv_scroll.increment[0]:
-                            uv_coords.x += self.speed_unit * obj.hubs_component_uv_scroll.speed[0]
+                        if not increment_x:
+                            uv_coords.x += move_x
                         else:
-                            if self.step_x >= obj.hubs_component_uv_scroll.increment[0]:
-                                uv_coords.x += obj.hubs_component_uv_scroll.increment[0]
+                            if abs(self.step_x) >= increment_x:
+                                uv_coords.x += increment_x if speed_x > 0 else -increment_x
                                 self.reset_step_x = True
 
-                        if not obj.hubs_component_uv_scroll.increment[1]:
-                            uv_coords.y += self.speed_unit * obj.hubs_component_uv_scroll.speed[1]
+                        if not increment_y:
+                            uv_coords.y += move_y
                         else:
-                            if self.step_y >= obj.hubs_component_uv_scroll.increment[1]:
-                                uv_coords.y += obj.hubs_component_uv_scroll.increment[1]
+                            if abs(self.step_y) >= increment_y:
+                                uv_coords.y += increment_y if speed_y > 0 else -increment_y
                                 self.reset_step_y = True
 
                         new_uv_positions.append((uv_coords.x, uv_coords.y))
@@ -294,8 +301,8 @@ class UVScrollPreviewOperator(Operator):
                 self.reset = False
 
             else:
-                if ((new_uv_positions[0][0] >= self.orig_uv_position[0][0] + 1) or (new_uv_positions[0][1] >= self.orig_uv_position[0][1] + 1)) \
-                or ((new_uv_positions[0][0] <= self.orig_uv_position[0][0] - 1) or (new_uv_positions[0][1] <= self.orig_uv_position[0][1] - 1)):
+                if (abs(new_uv_positions[0][0]) >= abs(self.orig_uv_position[0][0]) + 1
+                or  abs(new_uv_positions[0][1]) >= abs(self.orig_uv_position[0][1]) + 1):
                     self.reset = True
 
             if self.finished:
