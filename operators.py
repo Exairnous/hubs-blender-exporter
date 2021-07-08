@@ -242,6 +242,12 @@ class UVScrollPreviewOperator(Operator):
     def modal(self, context, event):
         obj = context.active_object
 
+        if obj.mode != 'OBJECT':
+            self.orig_mode = obj.mode
+            obj.hubs_component_uv_scroll.preview = False
+            self.finished = True
+            bpy.ops.object.mode_set(mode='OBJECT')
+
         if event.type == 'ESC' or not obj.hubs_component_uv_scroll.preview:
             obj.hubs_component_uv_scroll.preview = False
             self.finished = True
