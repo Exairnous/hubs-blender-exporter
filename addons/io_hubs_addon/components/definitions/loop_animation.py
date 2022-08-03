@@ -146,6 +146,13 @@ class LoopAnimation(HubsComponent):
         default=False
     )
 
+    repeations: IntProperty(
+        name="Repeations",
+        description="Number of times you want the animation to be repeated. -1 = infinity",
+        default=-1,
+        min=-1
+    )
+
     def draw(self, context, layout, panel_type):
         layout.label(text='Animations to play:')
 
@@ -162,12 +169,14 @@ class LoopAnimation(HubsComponent):
         layout.separator()
 
         layout.prop(data=self, property='paused')
+        layout.prop(data=self, property='repeations')
 
     def gather(self, export_settings, object):
         return {
             'clip': ",".join(
                 object.hubs_component_loop_animation.tracks_list.keys()),
-            'paused': self.paused
+            'paused': self.paused,
+            'repeations': self.repeations
         }
 
     @staticmethod
