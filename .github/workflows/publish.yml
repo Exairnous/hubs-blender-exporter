@@ -110,7 +110,6 @@ jobs:
           if-no-files-found: error
 
   publish:
-    if: ${{ github.ref == 'refs/heads/master' && github.repository == 'Hubs-Foundation/hubs-blender-exporter' }}
     needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 20
