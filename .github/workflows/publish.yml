@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      - uses: GitHubSecurityLab/actions-permissions/monitor@v1
       - uses: actions/checkout@v5
       - name: Python Linter
         uses: weibullguy/python-lint-plus@v1.12.0
@@ -60,6 +61,7 @@ jobs:
         version: ["3.5.0", "3.4.0", "3.3.1", "2.93.9"]
     timeout-minutes: 20
     steps:
+      - uses: GitHubSecurityLab/actions-permissions/monitor@v1
       - uses: actions/checkout@v5
       # Finds latest Blender build, and outputs the hosted build's download URL.
       - name: Find latest Blender build
@@ -117,6 +119,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      - uses: GitHubSecurityLab/actions-permissions/monitor@v1
       - uses: actions/checkout@v5
       - name: Update build number
         run: |
