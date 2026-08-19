@@ -70,7 +70,7 @@ class HubsUpdateRoomOperator(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        return hubs_session and hubs_session.user_logged_in and hubs_session.user_in_room
+        return hubs_session and hubs_session.user_logged_in and hubs_session.user_in_room and hubs_session.user_can_update
 
     def execute(self, context):
         try:
@@ -358,11 +358,12 @@ class HUBS_PT_ToolsSceneDebuggerUpdatePanel(bpy.types.Panel):
                      "export_force_sampling")
 
         row = box.row()
-        if not hubs_session.is_alive() or not hubs_session.user_logged_in:
+        if not hubs_session.is_alive() or not hubs_session.user_logged_in or not hubs_session.user_can_update:
             row = box.row()
             row.alert = True
+            warning_text = "You need to be signed in to Hubs to update the room scene" if hubs_session.user_can_update else "You don't have permission to update the room scene"
             row.label(
-                text="You need to be signed in to Hubs to update the room scene")
+                text=warning_text)
 
         update_mode = "Update current scene" if context.scene.hubs_scene_debugger_room_create_prefs.debugLocalScene else "Spawn as object"
         if hubs_session.is_alive():
@@ -399,14 +400,18 @@ class HUBS_PT_ToolsSceneSessionPanel(bpy.types.Panel):
             if hubs_session.is_alive():
                 if hubs_session.user_logged_in:
                     if hubs_session.user_in_room:
+                        icon = "green-dot.png" if hubs_session.user_can_update else "orange-dot.png"
                         col = row.column()
                         col.alignment = "LEFT"
                         col.active_default = True
                         col.label(
-                            icon_value=hubs_icons["green-dot.png"].icon_id)
-                        row = main_box.row(align=True)
-                        row.alignment = "CENTER"
-                        row.label(text=f'In room: {hubs_session.room_name}')
+                            icon_value=hubs_icons[icon].icon_id)
+                        row1 = main_box.row(align=True)
+                        row1.alignment = "CENTER"
+                        row1.label(text=f'In room: {hubs_session.room_name}')
+                        row2 = main_box.row(align=True)
+                        row2.alignment = "CENTER"
+                        row2.label(text=f'Can update room: {hubs_session.user_can_update}')
 
                     else:
                         col = row.column()

@@ -52,9 +52,10 @@ JS_DROP_FILE = """
 """
 
 JS_STATE_UPDATE = """
-    let params = { signedIn: false, entered: false, roomName: "", reticulumUrl: "" };
+    let params = { signedIn: false, entered: false, canUpdate: false, roomName: "", reticulumUrl: "" };
     try { params["signedIn"] = APP?.hubChannel?.signedIn; } catch(e) {};
     try { params["entered"] = APP?.scene?.is("entered"); } catch(e) {};
+    try { params["canUpdate"] = APP?.hubChannel?.can("update_hub"); } catch(e) {};
     try { params["roomName"] = APP?.hub?.name || APP?.hub?.slug || APP?.hub?.hub_id; } catch(e) {};
     try { params["reticulumUrl"] = window.$P.getReticulumFetchUrl(""); } catch (e) {};
     return params;
@@ -81,6 +82,7 @@ class HubsSession:
     _web_driver = None
     _user_logged_in = False
     _user_in_room = False
+    _user_can_update = False
     _room_name = ""
     _room_params = {}
     _reticulum_url = ""
@@ -167,6 +169,7 @@ class HubsSession:
             params = self._web_driver.execute_script(JS_STATE_UPDATE)
             self._user_logged_in = params["signedIn"] or "debugLocalScene" not in self._room_params
             self._user_in_room = params["entered"]
+            self._user_can_update = params["canUpdate"]
             self._room_name = params["roomName"]
             self._reticulum_url = params["reticulumUrl"]
             if not self._reticulum_url:
@@ -186,6 +189,7 @@ class HubsSession:
         else:
             self._user_logged_in = False
             self._user_in_room = False
+            self._user_can_update = False
             self._room_name = ""
             self.reticulumUrl = ""
 
@@ -323,6 +327,10 @@ class HubsSession:
     @property
     def user_in_room(self):
         return self._user_in_room
+
+    @property
+    def user_can_update(self):
+        return self._user_can_update
 
     @property
     def room_name(self):
